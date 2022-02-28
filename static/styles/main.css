@@ -1,0 +1,25 @@
+/* 
+.img { 
+    width:80%; 
+    z-index: 0;  
+} 
+
+.text-over-img { 
+    color: white;
+    z-index:1; 
+    font-size: 1.2em ;
+    margin-top: -100px; 
+}  */
+
+.box{
+    border: 2px solid black;
+    flex:1;
+  }
+  .box:nth-of-type(2) {
+    margin:0px 10px 0px 10px;
+  }
+  
+  .row{
+    display:flex;
+    width:100%;
+  }
