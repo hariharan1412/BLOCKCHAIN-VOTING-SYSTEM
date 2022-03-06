@@ -1,8 +1,6 @@
-# from distutils.log import debug
-# from email.mime import base
-# from enum import unique
-# import re
-from flask import Flask , render_template , url_for , redirect , abort
+
+from brownie import Contract
+from flask import Flask , render_template , url_for , redirect , abort , request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin , login_user , LoginManager , login_required , logout_user , current_user
 from flask_wtf import FlaskForm
@@ -10,36 +8,27 @@ from wtforms import StringField , PasswordField , SubmitField
 from wtforms.validators import InputRequired , Length , ValidationError
 from flask_bcrypt import Bcrypt
 from credentials import ADMIN , PASSWORD
+from web3 import Web3
+import json
+import time
 
-add = [
-    '0x18Ac764ACf55E9b76E4B17fe02ecDFB1e71Ca442',
-    '0xAE9132159fF5b4466eE7d17C74d026543c09395e',
-    '0xB70F65CAEa9A3C297e7cc690590d39B422e3Cfde',
-    '0xDd5D26942aAdc076A41Ccc1Bc982F88a797540bf',
-    '0x2Da9901AD8E2FF864ACE399B78F5b2b34CAd7326',
-    '0x90A337c5A610290D3037F2e178bD19c55bB457a8',
-    '0xf188bE3F05EE0e5AA84993df41ABC795c01303DA',
-    '0x7ee4Dc6d89c09DB98Ea4445B5A4cF1268140E04D',
-    '0x6467b03eC056b7fA00a5c0B01190Af77491c408a',
-    '0x712AaEC0BC7a6FE7D5cD77F8652Af845D298ad16'
-]
+# =========================================================== WEB3 ====================================================================== 
+
+network_url = "HTTP://127.0.0.1:7545"
+web = Web3(Web3.HTTPProvider(network_url))
 
 
-key = [
-    '3659e6e278282cd0a19c6847fba3ded24186e7bf13ccd6cf59f8b10f511c5ab6',
-    '240730cd0294a402ba85849a5b133b5883f015fa4964478942a3afac83dc3270',
-    'ef0a908340f5447e706fd9761f774f3db9cb7675f20d54b331d1f277dbfdc62d',
-    '140ca792ea22492f58cd7fd73848fdb063c26d55d685521b6f448ee4cdb1f244',
-    '140ca792ea22492f58cd7fd73848fdb063c26d55d685521b6f448ee4cdb1f244',
-    'beda2d6ea8e8f8ef4dac015db5eab9eea7e0d95b7d06fc489de33a955d7d0297',
-    'a017a3761872fced21bfacf09117f0c13f3c7fff05ec5e30dc7cb96f5ebee983',
-    'cd9678400401f21521d8d6a78b503f29393cabffed658fdbc71737d64fd252fb',
-    '02b767db3de1ba7c6a8847cf8df7d9aaac338acb89af5ded8f26ca9fde1b11c3',
-    'ca4922d59860e9e2a916e666a8b8560a20af84e58e037bb1cc907a9488f4239a'
-]
+truffleFile = json.load(open('./build/contracts/Election.json'))
 
-voted = []
+abi = truffleFile['abi']
+bytecode = truffleFile['bytecode']
 
+global end
+end = False
+
+
+
+# =========================================================== WEB3 ====================================================================== 
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -90,7 +79,6 @@ class LoginForm(FlaskForm):
 # ===========================================================Login System====================================================================== 
 
 
-
 @app.route('/login' , methods=['GET' , 'POST'])
 def login():
     form = LoginForm()
@@ -100,6 +88,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if bcrypt.check_password_hash(user.password , form.password.data):
+                
                 login_user(user)
                 return redirect(url_for('home'))
     user = None
@@ -142,20 +131,116 @@ def admin():
             if user.username == ADMIN:
                 if bcrypt.check_password_hash(user.password , PASSWORD):
                     login_user(user)
-                    return render_template('admin.html')
+                    return redirect(url_for('adminPortal'))
         except:
             abort(403)
 
     return render_template('adminLogin.html' , form=form)
 
+@app.route('/adminPortal' , methods=['GET' , 'POST'])
+# @login_required
+def adminPortal():
+
+    if  request.method == 'POST':
+        if request.form['adBtn'] == 'START':
+                    print("[ START ]")
+                                        
+                    def deploy(owner , signature):
+                        election = web.eth.contract(abi=abi , bytecode=bytecode)
+                        
+                        transaction_body = {
+                            'nonce':web.eth.get_transaction_count(owner),
+                            'gas'   :1728712,
+                            'gasPrice':web.toWei(8 , 'gwei')
+                        }
+                        
+                        deployment = election.constructor().buildTransaction(transaction_body)
+                        signed_transaction = web.eth.account.sign_transaction(deployment , signature)
+                        result = web.eth.send_raw_transaction(signed_transaction.rawTransaction)
+                        tx_receipt = web.eth.wait_for_transaction_receipt(result)
+
+                        return tx_receipt.contractAddress
+
+                    owner = user.address
+                    signature = user.key
+
+                    address = deploy(owner , signature)
+                    global election
+                    election = web.eth.contract(address=address , abi=abi)
+                    print(address , election)
+
+                    logout_user()
+                    return redirect(url_for('login'))
+
+        if request.form['adBtn'] == 'RESULT':
+                    print("[ RESULT ]")
+
+                    aang = election.caller().candidates(1)[2]
+                    korra = election.caller().candidates(2)[2]
+                    roku = election.caller().candidates(3)[2]
+                    return render_template('result.html' , aang=aang , korra=korra , roku=roku)
+
+        elif request.form['adBtn'] == 'END':
+                    print("[ END ]")
+                    
+                    global end
+                    end = True
+                    # election.functions.end().call() 
+
+                    return render_template('admin.html')
+    
+    elif request.method == 'GET':
+        print("[ SOMETHING HAPPENING ]")
+        return render_template('admin.html')
+
+
 @app.route('/vote' , methods=['GET' , 'POST'])
 @login_required
 def vote():
-    return render_template('vote.html')
+    
+    if end == False:
+        def vote(owner , signature , to_vote): #Voting
+            transaction_body = {
+                'nonce':web.eth.get_transaction_count(owner),
+                'gas'   :1728712,
+                'gasPrice':web.toWei(8 , 'gwei')
+            }
 
+            v = election.functions.vote(to_vote).buildTransaction(transaction_body)
+            signed_transaction = web.eth.account.sign_transaction(v , signature)
+            try:
+                result = web.eth.send_raw_transaction(signed_transaction.rawTransaction)
+                print(result)
+            except:
+                print(" EXCEPT ")
+                return render_template('admin.html')
+
+
+        if  request.method == 'POST':
+            if request.form['voteBtn'] == 'AANG':
+                        print("[ candidate1 ]")
+
+                        vote(user.address , user.key , 1)
+                        return redirect(url_for('voted'))
+
+            elif request.form['voteBtn'] == 'KORRA':
+                        print("[ candidate2 ]")
+                        vote(user.address , user.key , 2)
+                        return redirect(url_for('voted'))
+
+            elif request.form['voteBtn'] == 'ROKU':
+                        print("[ candidate3 ]")
+                        vote(user.address , user.key , 3)
+                        return redirect(url_for('voted'))
+        
+        elif request.method == 'GET':
+            return render_template('vote.html')
+
+    return "<h1> ELECTION was ENDED </h1>"
 
 @app.route('/voted' , methods=['GET' , 'POST'])
 def voted():
+    logout_user()
     return render_template('voted.html')
 
 

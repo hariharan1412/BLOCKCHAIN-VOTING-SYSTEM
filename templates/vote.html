@@ -3,10 +3,12 @@
 
 {% block heading %}
 
+<form method="POST" >
+
+
 <div class="container ">
     <div class="row">
-        <div class="">
-            
+        <div class="">            
             <div class="card text-white bg-dark mb-3 w-100 ">
                 <div class="card-header " style="text-align: center;padding: 0.5%;"> <b> <h4> VOTE </h4> </b></div>
                 <div class="card-body">
@@ -18,9 +20,15 @@
                             <div class="card text-dark bg-light mb-3" style="margin-left:1%; margin-right: 1%; max-width: 24rem;">
                               <div class="card-header"style="text-align: center;"><b> AANG </b></div>
                               <div class="card-body">
-                                <img class="card-img-top" src="\static\1.jpg" alt="Card image cap" >  
-                                
-                                <p class="card-text" style="text-align: center;padding-top: 10%;"><button type="button" class="btn btn-primary"><a href="{{url_for('voted')}}"style="color: white;text-decoration: none;">Vote</a></button></p>
+                                <img class="card-img-top"  src="\static\1.jpg" alt="Card image cap" >  
+                                  <div  style=="text-align: center;">
+                                    NAME : Aang <br>
+                                    AGE  : 35   <br>
+                                    SEX  : Male
+                                  </div>
+                                <p class="card-text" style="text-align: center;padding-top: 10%;">
+                                  <input type="submit" name="voteBtn" value="AANG" class="btn btn-primary"></input>
+                                </p>
 
                               </div>
                             </div>
@@ -32,7 +40,14 @@
                               <div class="card-header" style="text-align: center;"><b> KORRA </b></div>
                               <div class="card-body">
                                 <img class="card-img-top" src="\static\2.jpg" alt="Card image cap" >  
-                                <p class="card-text" style="text-align: center;padding-top: 10%;"><button type="button" class="btn btn-primary"><a href="{{url_for('voted')}}"style="color: white;text-decoration: none;">Vote</a></button></p>
+                                <div  style=="text-align: center;">
+                                  NAME : Korra <br>
+                                  AGE  : 31   <br>
+                                  SEX  : Female
+                                </div>
+                                <p class="card-text" style="text-align: center;padding-top: 10%;">
+                                  <input type="submit" name="voteBtn" value="KORRA" class="btn btn-primary"></input>
+                                </p>
 
                               </div>
                             </div>
@@ -44,7 +59,14 @@
                               <div class="card-header"style="text-align: center;"><b> ROKU </b></div>
                               <div class="card-body">
                                 <img class="card-img-top" src="\static\3.jpg" alt="Card image cap" >  
-                                <p class="card-text" style="text-align: center;padding-top: 10%;"><button type="button" class="btn btn-primary"><a href="{{url_for('voted')}}"style="color: white;text-decoration: none;">Vote</a></button></p>
+                                <div style=="text-align: center;" >
+                                  NAME : Roku <br>
+                                  AGE  : 45   <br>
+                                  SEX  : Male
+                                </div>
+                                <p class="card-text" style="text-align: center;padding-top: 10%;">
+                                  <input type="submit" name="voteBtn" value="ROKU" class="btn btn-primary"></input>
+                                </p>
                               
                               </div>
                             </div>
@@ -62,5 +84,10 @@
         </div>
     </div>
 </div>
+</form>
 
 {% endblock %}
+<!-- 
+<a href="{{url_for('voted')}}"style="color: white;text-decoration: none;">Vote</a>
+<a href="{{url_for('voted')}}"style="color: white;text-decoration: none;">Vote</a>
+<a href="{{url_for('voted')}}"style="color: white;text-decoration: none;">Vote</a> -->
